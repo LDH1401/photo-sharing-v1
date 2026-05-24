@@ -4,9 +4,14 @@
  * @param {string} url      The URL to issue the GET request.
  *
  */
-function fetchModel(url) {
-  const models = null;
-  return models;
+async function fetchModel(url) {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.status}`);
+  }
+
+  return response.json();
 }
 
 export default fetchModel;

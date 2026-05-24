@@ -1,16 +1,59 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Typography } from "@mui/material";
 import { Link, useParams } from "react-router-dom";
 
 import "./styles.css";
-import models from "../../modelData/models";
+import fetchModel from "../../lib/fetchModelData";
 
 /**
  * Define UserDetail, a React component of Project 4.
  */
 function UserDetail() {
     const { userId } = useParams();
-    const user = models.userModel(userId);
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        let ignore = false;
+
+        setLoading(true);
+        setError("");
+
+        fetchModel(`/user/${encodeURIComponent(userId)}`)
+            .then((userModel) => {
+                if (!ignore) {
+                    setUser(userModel);
+                    setLoading(false);
+                }
+            })
+            .catch(() => {
+                if (!ignore) {
+                    setError("Could not load user details.");
+                    setLoading(false);
+                }
+            });
+
+        return () => {
+            ignore = true;
+        };
+    }, [userId]);
+
+    if (loading) {
+        return (
+            <Typography color="text.secondary" variant="body1">
+                Loading user details...
+            </Typography>
+        );
+    }
+
+    if (error) {
+        return (
+            <Typography color="error" variant="body1">
+                {error}
+            </Typography>
+        );
+    }
 
     if (!user) {
         return (

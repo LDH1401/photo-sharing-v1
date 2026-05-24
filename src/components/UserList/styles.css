@@ -5,3 +5,33 @@
 .user-list-title {
   padding: 0 16px 8px;
 }
+
+.user-list-row {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  padding-right: 8px;
+}
+
+.user-list-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-list-counts {
+  display: flex;
+  gap: 6px;
+}
+
+.user-list-photo-count {
+  background-color: #2e7d32 !important;
+  color: #ffffff !important;
+  min-width: 32px;
+}
+
+.user-list-comment-count {
+  background-color: #c62828 !important;
+  color: #ffffff !important;
+  min-width: 32px;
+  text-decoration: none !important;
+}

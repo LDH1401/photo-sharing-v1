@@ -1,0 +1,22 @@
+.user-comments {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.user-comment {
+  align-items: flex-start;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  gap: 14px;
+  padding-bottom: 16px;
+}
+
+.user-comment-thumbnail {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  flex: 0 0 auto;
+  height: 72px;
+  object-fit: cover;
+  width: 96px;
+}

@@ -1,21 +1,27 @@
 import './App.css';
 
-import React from "react";
+import React, { useState } from "react";
 import { Grid, Paper } from "@mui/material";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 import TopBar from "./components/TopBar";
+import UserComments from "./components/UserComments";
 import UserDetail from "./components/UserDetail";
 import UserList from "./components/UserList";
 import UserPhotos from "./components/UserPhotos";
 
-const App = (props) => {
+const App = () => {
+  const [advancedFeatures, setAdvancedFeatures] = useState(false);
+
   return (
       <Router>
         <div>
           <Grid container spacing={2}>
             <Grid item xs={12}>
-              <TopBar />
+              <TopBar
+                advancedFeatures={advancedFeatures}
+                onAdvancedFeaturesChange={setAdvancedFeatures}
+              />
             </Grid>
             <div className="main-topbar-buffer" />
             <Grid item sm={3}>
@@ -32,7 +38,15 @@ const App = (props) => {
                   />
                   <Route
                       path="/photos/:userId"
-                      element = {<UserPhotos />}
+                      element = {<UserPhotos advancedFeatures={advancedFeatures} />}
+                  />
+                  <Route
+                      path="/photos/:userId/:photoId"
+                      element = {<UserPhotos advancedFeatures={advancedFeatures} />}
+                  />
+                  <Route
+                      path="/comments/:userId"
+                      element = {<UserComments />}
                   />
                   <Route path="/users" element={<UserList />} />
                 </Routes>

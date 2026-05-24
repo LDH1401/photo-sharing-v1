@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Box,
+  Chip,
   Divider,
   List,
   ListItemButton,
@@ -9,13 +11,43 @@ import {
 import { Link } from "react-router-dom";
 
 import "./styles.css";
-import models from "../../modelData/models";
+import fetchModel from "../../lib/fetchModelData";
 
 /**
  * Define UserList, a React component of Project 4.
  */
 function UserList () {
-    const users = models.userListModel();
+    const [users, setUsers] = useState(null);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+      let ignore = false;
+
+      fetchModel("/user/list")
+        .then((userList) => {
+          if (!ignore) {
+            setUsers(userList || []);
+          }
+        })
+        .catch(() => {
+          if (!ignore) {
+            setError("Could not load users.");
+          }
+        });
+
+      return () => {
+        ignore = true;
+      };
+    }, []);
+
+    if (error) {
+      return <Typography color="error">{error}</Typography>;
+    }
+
+    if (!users) {
+      return <Typography color="text.secondary">Loading users...</Typography>;
+    }
+
     return (
       <div className="user-list">
         <Typography className="user-list-title" variant="h6">
@@ -24,12 +56,31 @@ function UserList () {
         <List component="nav" aria-label="user list">
           {users.map((item) => (
             <React.Fragment key={item._id}>
-              <ListItemButton component={Link} to={`/users/${item._id}`}>
-                <ListItemText
-                  primary={`${item.first_name} ${item.last_name}`}
-                  secondary={item.occupation}
-                />
-              </ListItemButton>
+              <Box className="user-list-row">
+                <ListItemButton
+                  className="user-list-name"
+                  component={Link}
+                  to={`/users/${item._id}`}
+                >
+                  <ListItemText primary={`${item.first_name} ${item.last_name}`} />
+                </ListItemButton>
+                <Box className="user-list-counts">
+                  <Chip
+                    className="user-list-photo-count"
+                    component={Link}
+                    label={item.photo_count || 0}
+                    size="small"
+                    to={`/photos/${item._id}`}
+                  />
+                  <Chip
+                    className="user-list-comment-count"
+                    component={Link}
+                    label={item.comment_count || 0}
+                    size="small"
+                    to={`/comments/${item._id}`}
+                  />
+                </Box>
+              </Box>
               <Divider />
             </React.Fragment>
           ))}

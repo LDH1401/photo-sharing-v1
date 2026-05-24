@@ -4,6 +4,7 @@
 }
 
 .topbar-toolbar {
+  align-items: center;
   display: flex;
   gap: 16px;
   justify-content: space-between;
@@ -11,4 +12,21 @@
 
 .topbar-context {
   text-align: right;
+}
+
+.topbar-right {
+  align-items: center;
+  color: inherit;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: flex-end;
+}
+
+.topbar-right .MuiFormControlLabel-label {
+  color: inherit;
+}
+
+.topbar-checkbox {
+  color: inherit !important;
 }

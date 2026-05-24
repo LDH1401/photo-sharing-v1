@@ -47,3 +47,18 @@
   border-left: 3px solid #e0e0e0;
   padding-left: 12px;
 }
+
+.photo-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.photo-stepper-controls {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  max-width: 760px;
+}

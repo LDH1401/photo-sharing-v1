@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Link as MuiLink, Typography } from "@mui/material";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import "./styles.css";
-import models from "../../modelData/models";
+import fetchModel from "../../lib/fetchModelData";
 
 import kenobi1 from "../../images/kenobi1.jpg";
 import kenobi2 from "../../images/kenobi2.jpg";
@@ -49,10 +49,119 @@ function formatDateTime(dateTime) {
 /**
  * Define UserPhotos, a React component of Project 4.
  */
-function UserPhotos () {
-    const { userId } = useParams();
-    const user = models.userModel(userId);
-    const photos = models.photoOfUserModel(userId);
+function UserPhotos ({ advancedFeatures = false }) {
+    const { userId, photoId } = useParams();
+    const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+    const [photos, setPhotos] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        let ignore = false;
+
+        setLoading(true);
+        setError("");
+
+        Promise.all([
+            fetchModel(`/user/${encodeURIComponent(userId)}`),
+            fetchModel(`/photosOfUser/${encodeURIComponent(userId)}`),
+        ])
+            .then(([userModel, photoModels]) => {
+                if (!ignore) {
+                    setUser(userModel);
+                    setPhotos(photoModels || []);
+                    setLoading(false);
+                }
+            })
+            .catch(() => {
+                if (!ignore) {
+                    setError("Could not load photos.");
+                    setLoading(false);
+                }
+            });
+
+        return () => {
+            ignore = true;
+        };
+    }, [userId]);
+
+    const selectedIndex = photos.findIndex((photo) => photo._id === photoId);
+    const currentIndex = selectedIndex >= 0 ? selectedIndex : 0;
+    const selectedPhoto = photos[currentIndex];
+
+    useEffect(() => {
+        if (!advancedFeatures || loading || photos.length === 0) {
+            return;
+        }
+
+        const hasPhotoId = photos.some((photo) => photo._id === photoId);
+
+        if (!hasPhotoId) {
+            navigate(`/photos/${userId}/${photos[0]._id}`, { replace: true });
+        }
+    }, [advancedFeatures, loading, navigate, photoId, photos, userId]);
+
+    const goToPhoto = (photoIndex) => {
+        navigate(`/photos/${userId}/${photos[photoIndex]._id}`);
+    };
+
+    const renderPhoto = (photo) => (
+        <div className="photo-entry" key={photo._id}>
+            <Typography color="text.secondary" variant="body2">
+                {formatDateTime(photo.date_time)}
+            </Typography>
+
+            <img
+                alt={`${user.first_name} ${user.last_name}`}
+                className="photo-image"
+                src={photoImages[photo.file_name]}
+            />
+
+            <div className="comments">
+                <Typography variant="h6">Comments</Typography>
+
+                {photo.comments && photo.comments.length > 0 ? (
+                    photo.comments.map((comment) => (
+                        <div className="comment" key={comment._id}>
+                            <Typography color="text.secondary" variant="body2">
+                                <MuiLink
+                                    component={Link}
+                                    to={`/users/${comment.user._id}`}
+                                    underline="hover"
+                                >
+                                    {comment.user.first_name} {comment.user.last_name}
+                                </MuiLink>
+                                {" on "}
+                                {formatDateTime(comment.date_time)}
+                            </Typography>
+                            <Typography variant="body1">{comment.comment}</Typography>
+                        </div>
+                    ))
+                ) : (
+                    <Typography color="text.secondary" variant="body2">
+                        No comments yet.
+                    </Typography>
+                )}
+            </div>
+        </div>
+    );
+
+    if (loading) {
+        return (
+            <Typography color="text.secondary" variant="body1">
+                Loading photos...
+            </Typography>
+        );
+    }
+
+    if (error) {
+        return (
+            <Typography color="error" variant="body1">
+                {error}
+            </Typography>
+        );
+    }
 
     if (!user) {
         return (
@@ -81,47 +190,31 @@ function UserPhotos () {
 
         {photos.length === 0 ? (
           <Typography variant="body1">No photos available.</Typography>
-        ) : (
-          photos.map((photo) => (
-            <div className="photo-entry" key={photo._id}>
-              <Typography color="text.secondary" variant="body2">
-                {formatDateTime(photo.date_time)}
+        ) : advancedFeatures ? (
+          <div className="photo-stepper">
+            <div className="photo-stepper-controls">
+              <Button
+                disabled={currentIndex === 0}
+                onClick={() => goToPhoto(currentIndex - 1)}
+                variant="outlined"
+              >
+                Previous
+              </Button>
+              <Typography variant="body1">
+                Photo {currentIndex + 1} of {photos.length}
               </Typography>
-
-              <img
-                alt={`${user.first_name} ${user.last_name}`}
-                className="photo-image"
-                src={photoImages[photo.file_name]}
-              />
-
-              <div className="comments">
-                <Typography variant="h6">Comments</Typography>
-
-                {photo.comments && photo.comments.length > 0 ? (
-                  photo.comments.map((comment) => (
-                    <div className="comment" key={comment._id}>
-                      <Typography color="text.secondary" variant="body2">
-                        <MuiLink
-                          component={Link}
-                          to={`/users/${comment.user._id}`}
-                          underline="hover"
-                        >
-                          {comment.user.first_name} {comment.user.last_name}
-                        </MuiLink>
-                        {" on "}
-                        {formatDateTime(comment.date_time)}
-                      </Typography>
-                      <Typography variant="body1">{comment.comment}</Typography>
-                    </div>
-                  ))
-                ) : (
-                  <Typography color="text.secondary" variant="body2">
-                    No comments yet.
-                  </Typography>
-                )}
-              </div>
+              <Button
+                disabled={currentIndex === photos.length - 1}
+                onClick={() => goToPhoto(currentIndex + 1)}
+                variant="outlined"
+              >
+                Next
+              </Button>
             </div>
-          ))
+            {renderPhoto(selectedPhoto)}
+          </div>
+        ) : (
+          photos.map((photo) => renderPhoto(photo))
         )}
       </div>
     );
