@@ -1,0 +1,33 @@
+.user-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.user-detail-fields {
+  display: grid;
+  gap: 12px;
+  max-width: 640px;
+}
+
+.user-detail-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 16px;
+}
+
+.user-detail-label {
+  color: #616161;
+  font-weight: 700;
+}
+
+.user-detail-button {
+  align-self: flex-start;
+}
+
+@media (max-width: 600px) {
+  .user-detail-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
