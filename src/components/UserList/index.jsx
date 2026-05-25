@@ -16,12 +16,20 @@ import fetchModel from "../../lib/fetchModelData";
 /**
  * Define UserList, a React component of Project 4.
  */
-function UserList () {
+function UserList ({ loggedInUser }) {
     const [users, setUsers] = useState(null);
     const [error, setError] = useState("");
 
     useEffect(() => {
       let ignore = false;
+
+      if (!loggedInUser) {
+        setUsers(null);
+        setError("");
+        return () => {
+          ignore = true;
+        };
+      }
 
       fetchModel("/user/list")
         .then((userList) => {
@@ -38,7 +46,11 @@ function UserList () {
       return () => {
         ignore = true;
       };
-    }, []);
+    }, [loggedInUser]);
+
+    if (!loggedInUser) {
+      return null;
+    }
 
     if (error) {
       return <Typography color="error">{error}</Typography>;

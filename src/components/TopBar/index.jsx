@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AppBar,
+  Button,
   Checkbox,
   FormControlLabel,
   Toolbar,
   Typography,
 } from "@mui/material";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import "./styles.css";
 import fetchModel from "../../lib/fetchModelData";
@@ -25,15 +26,27 @@ function getRouteContext(pathname) {
 /**
  * Define TopBar, a React component of Project 4.
  */
-function TopBar ({ advancedFeatures, onAdvancedFeaturesChange }) {
+function TopBar ({
+    advancedFeatures,
+    loggedInUser,
+    onAdvancedFeaturesChange,
+    onLogout,
+    onPhotoAdded,
+}) {
     const location = useLocation();
+    const navigate = useNavigate();
+    const fileInputRef = useRef(null);
     const [contextText, setContextText] = useState("Users");
+    const [uploading, setUploading] = useState(false);
+    const [uploadMessage, setUploadMessage] = useState("");
 
     useEffect(() => {
         let ignore = false;
         const { viewName, userId } = getRouteContext(location.pathname);
 
-        if (viewName === "photos" && userId) {
+        if (!loggedInUser) {
+            setContextText("Please Login");
+        } else if (viewName === "photos" && userId) {
             setContextText("Photos");
             fetchModel(`/user/${encodeURIComponent(userId)}`)
                 .then((user) => {
@@ -85,7 +98,48 @@ function TopBar ({ advancedFeatures, onAdvancedFeaturesChange }) {
         return () => {
             ignore = true;
         };
-    }, [location.pathname]);
+    }, [location.pathname, loggedInUser]);
+
+    const handleLogout = () => {
+        fetchModel("/admin/logout", { method: "POST" })
+            .catch(() => null)
+            .finally(() => {
+                onLogout();
+                navigate("/login", { replace: true });
+            });
+    };
+
+    const handlePhotoUpload = (event) => {
+        const [photoFile] = event.target.files;
+
+        if (!photoFile) {
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("photo", photoFile);
+        setUploading(true);
+        setUploadMessage("");
+
+        fetchModel("/photos/new", {
+            method: "POST",
+            body: formData,
+        })
+            .then((photo) => {
+                setUploadMessage("Photo added.");
+                onPhotoAdded(photo);
+                navigate(`/photos/${photo.user_id}/${photo._id}`);
+            })
+            .catch((uploadError) => {
+                setUploadMessage(uploadError.message || "Photo upload failed.");
+            })
+            .finally(() => {
+                setUploading(false);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                }
+            });
+    };
 
     return (
       <AppBar className="topbar-appBar" position="absolute">
@@ -97,16 +151,41 @@ function TopBar ({ advancedFeatures, onAdvancedFeaturesChange }) {
             <Typography className="topbar-context" variant="h6" color="inherit">
               {contextText}
             </Typography>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={advancedFeatures}
-                  className="topbar-checkbox"
-                  onChange={(event) => onAdvancedFeaturesChange(event.target.checked)}
+            {loggedInUser && (
+              <>
+                <Typography color="inherit" variant="body1">
+                  Hi {loggedInUser.first_name}
+                </Typography>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={advancedFeatures}
+                      className="topbar-checkbox"
+                      onChange={(event) => onAdvancedFeaturesChange(event.target.checked)}
+                    />
+                  }
+                  label="Enable Advanced Features"
                 />
-              }
-              label="Enable Advanced Features"
-            />
+                <Button color="inherit" component="label" disabled={uploading} variant="outlined">
+                  {uploading ? "Uploading..." : "Add Photo"}
+                  <input
+                    accept="image/*"
+                    hidden
+                    onChange={handlePhotoUpload}
+                    ref={fileInputRef}
+                    type="file"
+                  />
+                </Button>
+                {uploadMessage && (
+                  <Typography className="topbar-upload-message" color="inherit" variant="body2">
+                    {uploadMessage}
+                  </Typography>
+                )}
+                <Button color="inherit" onClick={handleLogout} variant="outlined">
+                  Logout
+                </Button>
+              </>
+            )}
           </div>
         </Toolbar>
       </AppBar>

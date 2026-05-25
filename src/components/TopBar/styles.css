@@ -30,3 +30,7 @@
 .topbar-checkbox {
   color: inherit !important;
 }
+
+.topbar-upload-message {
+  min-width: 88px;
+}

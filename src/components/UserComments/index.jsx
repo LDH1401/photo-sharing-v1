@@ -33,6 +33,10 @@ const photoImages = {
   "took2.jpg": took2,
 };
 
+function getPhotoSrc(fileName) {
+  return photoImages[fileName] || `/images/${fileName}`;
+}
+
 function UserComments() {
   const { userId } = useParams();
   const [user, setUser] = useState(null);
@@ -106,7 +110,7 @@ function UserComments() {
             <img
               alt="Commented item thumbnail"
               className="user-comment-thumbnail"
-              src={photoImages[comment.photo.file_name]}
+              src={getPhotoSrc(comment.photo.file_name)}
             />
             <Typography color="text.primary" variant="body1">
               {comment.comment}

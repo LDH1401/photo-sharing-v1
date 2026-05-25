@@ -1,0 +1,36 @@
+.login-register {
+  align-items: flex-start;
+  display: flex;
+  min-height: 100%;
+  padding: 24px;
+}
+
+.login-register-panel {
+  max-width: 760px;
+  width: 100%;
+}
+
+.login-register-section {
+  border-top: 1px solid #e0e0e0;
+  margin-top: 32px;
+  padding-top: 24px;
+}
+
+.login-register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.login-register-name-row {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 700px) {
+  .login-register-name-row {
+    grid-template-columns: 1fr;
+  }
+}

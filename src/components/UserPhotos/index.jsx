@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Button, Link as MuiLink, Typography } from "@mui/material";
+import {
+    Alert,
+    Button,
+    Link as MuiLink,
+    TextField,
+    Typography,
+} from "@mui/material";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import "./styles.css";
@@ -33,6 +39,10 @@ const photoImages = {
     "took2.jpg": took2,
 };
 
+function getPhotoSrc(fileName) {
+    return photoImages[fileName] || `/images/${fileName}`;
+}
+
 function formatDateTime(dateTime) {
     const date = new Date(dateTime);
 
@@ -49,13 +59,16 @@ function formatDateTime(dateTime) {
 /**
  * Define UserPhotos, a React component of Project 4.
  */
-function UserPhotos ({ advancedFeatures = false }) {
+function UserPhotos ({ advancedFeatures = false, photoRefreshKey = 0 }) {
     const { userId, photoId } = useParams();
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [photos, setPhotos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [commentTexts, setCommentTexts] = useState({});
+    const [commentErrors, setCommentErrors] = useState({});
+    const [commentSubmitting, setCommentSubmitting] = useState({});
 
     useEffect(() => {
         let ignore = false;
@@ -84,7 +97,7 @@ function UserPhotos ({ advancedFeatures = false }) {
         return () => {
             ignore = true;
         };
-    }, [userId]);
+    }, [userId, photoRefreshKey]);
 
     const selectedIndex = photos.findIndex((photo) => photo._id === photoId);
     const currentIndex = selectedIndex >= 0 ? selectedIndex : 0;
@@ -106,6 +119,67 @@ function UserPhotos ({ advancedFeatures = false }) {
         navigate(`/photos/${userId}/${photos[photoIndex]._id}`);
     };
 
+    const setCommentText = (photo, value) => {
+        setCommentTexts((currentTexts) => ({
+            ...currentTexts,
+            [photo._id]: value,
+        }));
+    };
+
+    const setPhotoCommentError = (photo, message) => {
+        setCommentErrors((currentErrors) => ({
+            ...currentErrors,
+            [photo._id]: message,
+        }));
+    };
+
+    const setPhotoCommentSubmitting = (photo, isSubmitting) => {
+        setCommentSubmitting((currentSubmitting) => ({
+            ...currentSubmitting,
+            [photo._id]: isSubmitting,
+        }));
+    };
+
+    const handleAddComment = (event, photo) => {
+        event.preventDefault();
+
+        const commentText = (commentTexts[photo._id] || "").trim();
+        if (!commentText) {
+            setPhotoCommentError(photo, "Comment must not be empty.");
+            return;
+        }
+
+        setPhotoCommentSubmitting(photo, true);
+        setPhotoCommentError(photo, "");
+
+        fetchModel(`/commentsOfPhoto/${encodeURIComponent(photo._id)}`, {
+            method: "POST",
+            body: JSON.stringify({ comment: commentText }),
+        })
+            .then((comment) => {
+                setPhotos((currentPhotos) =>
+                    currentPhotos.map((currentPhoto) =>
+                        currentPhoto._id === photo._id
+                            ? {
+                                  ...currentPhoto,
+                                  comments: [...(currentPhoto.comments || []), comment],
+                              }
+                            : currentPhoto
+                    )
+                );
+                setCommentText(photo, "");
+            })
+            .catch((commentError) => {
+                setPhotoCommentError(
+                    photo,
+                    commentError.message || "Could not add comment."
+                );
+            })
+            .finally(() => {
+                setPhotoCommentSubmitting(photo, false);
+            });
+    };
+
     const renderPhoto = (photo) => (
         <div className="photo-entry" key={photo._id}>
             <Typography color="text.secondary" variant="body2">
@@ -115,7 +189,7 @@ function UserPhotos ({ advancedFeatures = false }) {
             <img
                 alt={`${user.first_name} ${user.last_name}`}
                 className="photo-image"
-                src={photoImages[photo.file_name]}
+                src={getPhotoSrc(photo.file_name)}
             />
 
             <div className="comments">
@@ -143,6 +217,29 @@ function UserPhotos ({ advancedFeatures = false }) {
                         No comments yet.
                     </Typography>
                 )}
+                <form
+                    className="comment-form"
+                    onSubmit={(event) => handleAddComment(event, photo)}
+                >
+                    <TextField
+                        fullWidth
+                        label="Add a comment"
+                        multiline
+                        onChange={(event) => setCommentText(photo, event.target.value)}
+                        rows={2}
+                        value={commentTexts[photo._id] || ""}
+                    />
+                    {commentErrors[photo._id] && (
+                        <Alert severity="error">{commentErrors[photo._id]}</Alert>
+                    )}
+                    <Button
+                        disabled={Boolean(commentSubmitting[photo._id])}
+                        type="submit"
+                        variant="contained"
+                    >
+                        {commentSubmitting[photo._id] ? "Adding..." : "Add Comment"}
+                    </Button>
+                </form>
             </div>
         </div>
     );

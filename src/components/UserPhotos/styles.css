@@ -48,6 +48,17 @@
   padding-left: 12px;
 }
 
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.comment-form .MuiButton-root {
+  align-self: flex-start;
+}
+
 .photo-stepper {
   display: flex;
   flex-direction: column;
